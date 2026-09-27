@@ -1,0 +1,12 @@
+# Local secrets and machine-specific files
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+*.log
+node_modules/
+.sites-runtime/
+__pycache__/
+
+# dist/ is the editable static website and must stay tracked.
