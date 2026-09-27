@@ -76,3 +76,118 @@ if ('IntersectionObserver' in window && !reducedMotion) {
 } else {
   document.querySelectorAll('.reveal').forEach((element) => element.classList.add('visible'));
 }
+
+const showcaseStage = document.querySelector('.hero-visual');
+const showcaseControls = [...document.querySelectorAll('[data-showcase-slide]')];
+const showcaseFrames = {
+  left: document.querySelector('[data-showcase-frame="left"]'),
+  main: document.querySelector('[data-showcase-frame="main"]'),
+  right: document.querySelector('[data-showcase-frame="right"]'),
+};
+const showcaseItems = [
+  {
+    src: 'assets/aara-grain.webp',
+    alt: 'Aara and Grain website interface',
+    label: 'Open the Aara and Grain live demo',
+    href: 'https://seanpxxl.github.io/aara-and-grain-demo/',
+  },
+  {
+    src: 'assets/nocturne-ink.webp',
+    alt: 'Nocturne Ink website concept',
+    label: 'Open the Nocturne Ink live demo',
+    href: 'https://seanpxxl.github.io/nocturne-ink-demo/',
+  },
+  {
+    src: 'assets/services-showcase.webp',
+    alt: 'Premium laptop website interface beside a smartphone video-editing timeline',
+    label: 'Stech Digital services showcase',
+    href: '',
+  },
+];
+
+let activeShowcase = 2;
+let showcaseTimer;
+let showcaseSwitching = false;
+let showcaseTouchX = null;
+
+const assignShowcaseItem = (frame, item) => {
+  if (!frame) return;
+  const image = frame.querySelector('img');
+  if (image) {
+    image.src = item.src;
+    image.alt = item.alt;
+  }
+  frame.setAttribute('aria-label', item.label);
+  frame.classList.toggle('demo-showcase-link', Boolean(item.href));
+  if (item.href) {
+    frame.href = item.href;
+    frame.target = '_blank';
+    frame.rel = 'noopener';
+  } else {
+    frame.removeAttribute('href');
+    frame.removeAttribute('target');
+    frame.removeAttribute('rel');
+  }
+};
+
+const scheduleShowcase = () => {
+  window.clearTimeout(showcaseTimer);
+  if (reducedMotion || document.hidden) return;
+  showcaseTimer = window.setTimeout(() => setShowcase((activeShowcase + 1) % showcaseItems.length), 5200);
+};
+
+const setShowcase = (nextIndex, animate = true) => {
+  if (!showcaseStage || showcaseSwitching) return;
+  const normalizedIndex = (nextIndex + showcaseItems.length) % showcaseItems.length;
+  if (normalizedIndex === activeShowcase) {
+    scheduleShowcase();
+    return;
+  }
+
+  const commit = () => {
+    assignShowcaseItem(showcaseFrames.main, showcaseItems[normalizedIndex]);
+    assignShowcaseItem(showcaseFrames.left, showcaseItems[(normalizedIndex + 1) % showcaseItems.length]);
+    assignShowcaseItem(showcaseFrames.right, showcaseItems[(normalizedIndex + 2) % showcaseItems.length]);
+    activeShowcase = normalizedIndex;
+    showcaseControls.forEach((control, index) => {
+      const selected = index === activeShowcase;
+      control.classList.toggle('active', selected);
+      if (selected) control.setAttribute('aria-current', 'true');
+      else control.removeAttribute('aria-current');
+    });
+    showcaseStage.classList.remove('is-switching');
+    showcaseSwitching = false;
+    scheduleShowcase();
+  };
+
+  window.clearTimeout(showcaseTimer);
+  if (animate && !reducedMotion) {
+    showcaseSwitching = true;
+    showcaseStage.classList.add('is-switching');
+    window.setTimeout(commit, 220);
+  } else {
+    commit();
+  }
+};
+
+showcaseControls.forEach((control) => {
+  control.addEventListener('click', () => setShowcase(Number(control.dataset.showcaseSlide)));
+});
+
+showcaseStage?.addEventListener('pointerenter', () => window.clearTimeout(showcaseTimer));
+showcaseStage?.addEventListener('pointerleave', scheduleShowcase);
+showcaseStage?.addEventListener('focusin', () => window.clearTimeout(showcaseTimer));
+showcaseStage?.addEventListener('focusout', (event) => {
+  if (!showcaseStage.contains(event.relatedTarget)) scheduleShowcase();
+});
+showcaseStage?.addEventListener('pointerdown', (event) => {
+  if (event.pointerType === 'touch') showcaseTouchX = event.clientX;
+}, { passive: true });
+showcaseStage?.addEventListener('pointerup', (event) => {
+  if (showcaseTouchX === null || event.pointerType !== 'touch') return;
+  const distance = event.clientX - showcaseTouchX;
+  showcaseTouchX = null;
+  if (Math.abs(distance) > 42) setShowcase(activeShowcase + (distance < 0 ? 1 : -1));
+}, { passive: true });
+document.addEventListener('visibilitychange', scheduleShowcase);
+scheduleShowcase();
