@@ -1,3 +1,30 @@
+window.dataLayer = window.dataLayer || [];
+window.gtag = window.gtag || function(){ window.dataLayer.push(arguments); };
+const analyticsConsent = localStorage.getItem('stech-analytics-consent');
+window.gtag('consent', 'default', {
+  analytics_storage: analyticsConsent === 'accepted' ? 'granted' : 'denied',
+  ad_storage: 'denied',
+  ad_user_data: 'denied',
+  ad_personalization: 'denied',
+  wait_for_update: 500
+});
+let analyticsLoaded = false;
+const loadAnalytics = () => {
+  if (analyticsLoaded) return;
+  analyticsLoaded = true;
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = 'https://www.googletagmanager.com/gtag/js?id=G-X0FEV3TYK3';
+  document.head.appendChild(script);
+  window.gtag('js', new Date());
+  window.gtag('config', 'G-X0FEV3TYK3', { anonymize_ip: true });
+};
+const scheduleAnalytics = () => {
+  if ('requestIdleCallback' in window) window.requestIdleCallback(loadAnalytics, { timeout: 2500 });
+  else window.setTimeout(loadAnalytics, 1200);
+};
+if (analyticsConsent === 'accepted') scheduleAnalytics();
+
 const menuButton = document.querySelector('.menu');
 const mobileNav = document.querySelector('.mobile-nav');
 
@@ -17,6 +44,9 @@ if (year) year.textContent = String(new Date().getFullYear());
 
 const progress = document.querySelector('.page-progress span');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const lowPowerDevice = (navigator.deviceMemory && navigator.deviceMemory <= 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+const motionEnabled = !reducedMotion && !lowPowerDevice;
+if (lowPowerDevice) document.documentElement.classList.add('low-power');
 let ticking = false;
 
 const updateScrollEffects = () => {
@@ -34,7 +64,7 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 updateScrollEffects();
 
-if (!reducedMotion && window.matchMedia('(pointer: fine)').matches) {
+if (motionEnabled && window.matchMedia('(pointer: fine)').matches) {
   const stage = document.querySelector('.tilt-stage');
   window.addEventListener('pointermove', (event) => {
     document.documentElement.style.setProperty('--pointer-x', `${event.clientX}px`);
@@ -64,7 +94,7 @@ if (!reducedMotion && window.matchMedia('(pointer: fine)').matches) {
   });
 }
 
-if ('IntersectionObserver' in window && !reducedMotion) {
+if ('IntersectionObserver' in window && motionEnabled) {
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
@@ -91,18 +121,21 @@ const showcaseItems = [
     alt: 'Aara and Grain website interface',
     label: 'Open the Aara and Grain live demo',
     href: 'https://seanpxxl.github.io/aara-and-grain-demo/',
+    srcset: 'assets/aara-grain-640.webp 640w, assets/aara-grain.webp 1000w',
   },
   {
     src: 'assets/nocturne-ink.webp',
     alt: 'Nocturne Ink website concept',
     label: 'Open the Nocturne Ink live demo',
     href: 'https://seanpxxl.github.io/nocturne-ink-demo/',
+    srcset: 'assets/nocturne-ink-640.webp 640w, assets/nocturne-ink.webp 900w',
   },
   {
     src: 'assets/services-showcase.webp',
     alt: 'Premium laptop website interface beside a smartphone video-editing timeline',
     label: 'Stech Digital services showcase',
     href: '',
+    srcset: 'assets/services-showcase-640.webp 640w, assets/services-showcase.webp 1122w',
   },
 ];
 
@@ -116,6 +149,7 @@ const assignShowcaseItem = (frame, item) => {
   const image = frame.querySelector('img');
   if (image) {
     image.src = item.src;
+    image.srcset = item.srcset || '';
     image.alt = item.alt;
   }
   frame.setAttribute('aria-label', item.label);
@@ -133,7 +167,7 @@ const assignShowcaseItem = (frame, item) => {
 
 const scheduleShowcase = () => {
   window.clearTimeout(showcaseTimer);
-  if (reducedMotion || document.hidden) return;
+  if (!motionEnabled || document.hidden) return;
   showcaseTimer = window.setTimeout(() => setShowcase((activeShowcase + 1) % showcaseItems.length), 5200);
 };
 
@@ -162,7 +196,7 @@ const setShowcase = (nextIndex, animate = true) => {
   };
 
   window.clearTimeout(showcaseTimer);
-  if (animate && !reducedMotion) {
+  if (animate && motionEnabled) {
     showcaseSwitching = true;
     showcaseStage.classList.add('is-switching');
     window.setTimeout(commit, 220);
@@ -198,6 +232,7 @@ const acceptAnalytics = () => {
   localStorage.setItem('stech-analytics-consent', 'accepted');
   if (typeof window.gtag === 'function') {
     window.gtag('consent', 'update', { analytics_storage: 'granted' });
+    loadAnalytics();
   }
   cookieBanner?.setAttribute('hidden', '');
 };
