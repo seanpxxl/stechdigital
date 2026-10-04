@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://stechdigital.online/sitemap.xml
