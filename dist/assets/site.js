@@ -12,7 +12,8 @@ mobileNav?.querySelectorAll('a').forEach((link) => link.addEventListener('click'
   mobileNav.classList.remove('open');
 }));
 
-document.querySelector('#year').textContent = String(new Date().getFullYear());
+const year = document.querySelector('#year');
+if (year) year.textContent = String(new Date().getFullYear());
 
 const progress = document.querySelector('.page-progress span');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
