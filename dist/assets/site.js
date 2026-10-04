@@ -191,3 +191,23 @@ showcaseStage?.addEventListener('pointerup', (event) => {
 }, { passive: true });
 document.addEventListener('visibilitychange', scheduleShowcase);
 scheduleShowcase();
+
+const cookieBanner = document.querySelector('[data-cookie-banner]');
+const acceptAnalytics = () => {
+  localStorage.setItem('stech-analytics-consent', 'accepted');
+  if (typeof window.gtag === 'function') {
+    window.gtag('consent', 'update', { analytics_storage: 'granted' });
+  }
+  cookieBanner?.setAttribute('hidden', '');
+};
+const declineAnalytics = () => {
+  localStorage.setItem('stech-analytics-consent', 'declined');
+  if (typeof window.gtag === 'function') {
+    window.gtag('consent', 'update', { analytics_storage: 'denied' });
+  }
+  cookieBanner?.setAttribute('hidden', '');
+};
+if (!localStorage.getItem('stech-analytics-consent')) cookieBanner?.removeAttribute('hidden');
+document.querySelector('[data-cookie-accept]')?.addEventListener('click', acceptAnalytics);
+document.querySelector('[data-cookie-decline]')?.addEventListener('click', declineAnalytics);
+document.querySelector('[data-cookie-settings]')?.addEventListener('click', () => cookieBanner?.removeAttribute('hidden'));
