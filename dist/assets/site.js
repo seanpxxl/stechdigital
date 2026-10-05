@@ -69,9 +69,12 @@ if (year) year.textContent = String(new Date().getFullYear());
 
 const progress = document.querySelector('.page-progress span');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const lowPowerDevice = (navigator.deviceMemory && navigator.deviceMemory <= 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
-const motionEnabled = !reducedMotion && !lowPowerDevice;
+const lowPowerDevice = (navigator.deviceMemory && navigator.deviceMemory <= 2) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2);
+const motionEnabled = !reducedMotion;
 if (lowPowerDevice) document.documentElement.classList.add('low-power');
+if (motionEnabled && !lowPowerDevice && (window.matchMedia('(any-pointer: coarse)').matches || window.innerWidth <= 980)) {
+  document.documentElement.classList.add('mobile-motion');
+}
 let ticking = false;
 
 const updateScrollEffects = () => {
