@@ -39,6 +39,31 @@ mobileNav?.querySelectorAll('a').forEach((link) => link.addEventListener('click'
   mobileNav.classList.remove('open');
 }));
 
+// Keep homepage section navigation useful without exposing hash fragments in
+// the public address bar. Direct links with a hash still scroll correctly,
+// then settle back to the canonical homepage URL.
+const cleanHomepageUrl = () => {
+  if (window.location.pathname === '/' && window.location.hash) {
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+  }
+};
+
+if (window.location.pathname === '/') {
+  document.querySelectorAll('a[href^="#"]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      const target = document.querySelector(link.getAttribute('href'));
+      if (!target) return;
+      event.preventDefault();
+      target.scrollIntoView({ behavior: motionEnabled ? 'smooth' : 'auto', block: 'start' });
+      cleanHomepageUrl();
+    });
+  });
+
+  if (window.location.hash) {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(cleanHomepageUrl));
+  }
+}
+
 const year = document.querySelector('#year');
 if (year) year.textContent = String(new Date().getFullYear());
 
@@ -108,6 +133,46 @@ if ('IntersectionObserver' in window && motionEnabled) {
   document.querySelectorAll('.reveal').forEach((element) => element.classList.add('visible'));
 }
 
+const proofNumbers = [...document.querySelectorAll('[data-count]')];
+const setProofNumber = (element, value) => {
+  const pad = Number(element.dataset.pad || 0);
+  const suffix = element.dataset.suffix || '';
+  element.textContent = String(value).padStart(pad, '0') + suffix;
+};
+const animateProofNumber = (element) => {
+  if (element.dataset.counted === 'true') return;
+  element.dataset.counted = 'true';
+  const target = Number(element.dataset.count || 0);
+  if (!motionEnabled) {
+    setProofNumber(element, target);
+    return;
+  }
+  const started = performance.now();
+  const duration = 1100;
+  const tick = (now) => {
+    const progress = Math.min(1, (now - started) / duration);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    setProofNumber(element, Math.round(target * eased));
+    if (progress < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+};
+if ('IntersectionObserver' in window && motionEnabled) {
+  const proofObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      animateProofNumber(entry.target);
+      proofObserver.unobserve(entry.target);
+    });
+  }, { threshold: 0.45 });
+  proofNumbers.forEach((number) => {
+    setProofNumber(number, 0);
+    proofObserver.observe(number);
+  });
+} else {
+  proofNumbers.forEach((number) => animateProofNumber(number));
+}
+
 const showcaseStage = document.querySelector('.hero-visual');
 const showcaseControls = [...document.querySelectorAll('[data-showcase-slide]')];
 const showcaseFrames = {
@@ -117,25 +182,25 @@ const showcaseFrames = {
 };
 const showcaseItems = [
   {
-    src: 'assets/aara-grain.webp',
+    src: '/assets/aara-grain.webp',
     alt: 'Aara and Grain website interface',
     label: 'Open the Aara and Grain live demo',
     href: 'https://seanpxxl.github.io/aara-and-grain-demo/',
-    srcset: 'assets/aara-grain-640.webp 640w, assets/aara-grain.webp 1000w',
+    srcset: '/assets/aara-grain-640.webp 640w, /assets/aara-grain.webp 1000w',
   },
   {
-    src: 'assets/nocturne-ink.webp',
+    src: '/assets/nocturne-ink.webp',
     alt: 'Nocturne Ink website concept',
     label: 'Open the Nocturne Ink live demo',
     href: 'https://seanpxxl.github.io/nocturne-ink-demo/',
-    srcset: 'assets/nocturne-ink-640.webp 640w, assets/nocturne-ink.webp 900w',
+    srcset: '/assets/nocturne-ink-640.webp 640w, /assets/nocturne-ink.webp 900w',
   },
   {
-    src: 'assets/services-showcase.webp',
+    src: '/assets/services-showcase.webp',
     alt: 'Premium laptop website interface beside a smartphone video-editing timeline',
     label: 'Stech Digital services showcase',
     href: '',
-    srcset: 'assets/services-showcase-640.webp 640w, assets/services-showcase.webp 1122w',
+    srcset: '/assets/services-showcase-640.webp 640w, /assets/services-showcase.webp 1122w',
   },
 ];
 

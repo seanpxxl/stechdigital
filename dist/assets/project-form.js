@@ -1,18 +1,39 @@
-const form=document.querySelector('[data-project-form]');
-const steps=[...document.querySelectorAll('[data-form-step]')];
-const label=document.querySelector('[data-step-label]');
-const bar=document.querySelector('[data-form-progress]');
-const submit=document.querySelector('[data-form-submit]');
-const progressContainer=document.querySelector('[data-progress-container]');
-const phone=document.querySelector('#phone');
-const phoneRequired=document.querySelector('[data-phone-required]');
-let current=0;
-function showStep(index){current=Math.max(0,Math.min(index,steps.length-1));steps.forEach((step,i)=>step.hidden=i!==current);if(label)label.textContent='Step '+(current+1)+' of '+steps.length;if(bar)bar.style.width=((current+1)/steps.length*100)+'%';if(progressContainer)progressContainer.setAttribute('aria-valuenow',String(current+1));document.querySelector('.project-form-card')?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}
-function validStep(){for(const control of steps[current].querySelectorAll('input,select,textarea')){if(!control.checkValidity()){control.reportValidity();control.focus();return false;}}return true;}
-document.querySelectorAll('[data-form-next]').forEach(button=>button.addEventListener('click',()=>{if(validStep())showStep(current+1);}));
-document.querySelectorAll('[data-form-back]').forEach(button=>button.addEventListener('click',()=>showStep(current-1)));
-function syncPhoneRequirement(){const method=document.querySelector('input[name="Preferred contact"]:checked')?.value;const needed=method==='WhatsApp'||method==='Call';if(phone)phone.required=needed;if(phoneRequired)phoneRequired.hidden=!needed;}
-document.querySelectorAll('input[name="Preferred contact"]').forEach(input=>input.addEventListener('change',syncPhoneRequirement));
-syncPhoneRequirement();
-form?.addEventListener('submit',event=>{if(!form.checkValidity()){event.preventDefault();const invalid=form.querySelector(':invalid');const step=steps.findIndex(item=>item.contains(invalid));if(step>=0)showStep(step);invalid?.reportValidity();return;}sessionStorage.setItem('stech-project-sent','true');if(localStorage.getItem('stech-analytics-consent')==='accepted'&&typeof window.gtag==='function')window.gtag('event','project_form_submit');if(submit){submit.disabled=true;submit.textContent='Sending…';}});
-showStep(0);
+const form = document.querySelector('[data-project-form]');
+const submit = document.querySelector('[data-form-submit]');
+const email = document.querySelector('#email');
+const phone = document.querySelector('#phone');
+const emailRequired = document.querySelector('[data-email-required]');
+const phoneRequired = document.querySelector('[data-phone-required]');
+
+function syncContactRequirement() {
+  const method = document.querySelector('input[name="Preferred contact"]:checked')?.value || 'Email';
+  const needsEmail = method === 'Email';
+  const needsPhone = method === 'WhatsApp' || method === 'Call';
+  if (email) email.required = needsEmail;
+  if (phone) phone.required = needsPhone;
+  if (emailRequired) emailRequired.hidden = !needsEmail;
+  if (phoneRequired) phoneRequired.hidden = !needsPhone;
+}
+
+document.querySelectorAll('input[name="Preferred contact"]').forEach((input) => {
+  input.addEventListener('change', syncContactRequirement);
+});
+syncContactRequirement();
+
+form?.addEventListener('submit', (event) => {
+  if (!form.checkValidity()) {
+    event.preventDefault();
+    const invalid = form.querySelector(':invalid');
+    invalid?.reportValidity();
+    invalid?.focus();
+    return;
+  }
+  sessionStorage.setItem('stech-project-sent', 'true');
+  if (localStorage.getItem('stech-analytics-consent') === 'accepted' && typeof window.gtag === 'function') {
+    window.gtag('event', 'project_form_submit');
+  }
+  if (submit) {
+    submit.disabled = true;
+    submit.textContent = 'Sending…';
+  }
+});
