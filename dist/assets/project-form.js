@@ -6,7 +6,8 @@ const emailRequired = document.querySelector('[data-email-required]');
 const phoneRequired = document.querySelector('[data-phone-required]');
 
 function syncContactRequirement() {
-  const method = document.querySelector('input[name="Preferred contact"]:checked')?.value || 'Email';
+  const selectedMethod = document.querySelector('input[name="Preferred contact"]:checked');
+  const method = selectedMethod ? selectedMethod.value : 'Email';
   const needsEmail = method === 'Email';
   const needsPhone = method === 'WhatsApp' || method === 'Call';
   if (email) email.required = needsEmail;
@@ -20,12 +21,12 @@ document.querySelectorAll('input[name="Preferred contact"]').forEach((input) => 
 });
 syncContactRequirement();
 
-form?.addEventListener('submit', (event) => {
+if (form) form.addEventListener('submit', (event) => {
   if (!form.checkValidity()) {
     event.preventDefault();
     const invalid = form.querySelector(':invalid');
-    invalid?.reportValidity();
-    invalid?.focus();
+    if (invalid) invalid.reportValidity();
+    if (invalid) invalid.focus();
     return;
   }
   sessionStorage.setItem('stech-project-sent', 'true');
